@@ -1,22 +1,21 @@
 package gm.zona_fit.gui;
 
 import gm.zona_fit.modelo.Usuario;
-import gm.zona_fit.servicio.UsuarioService; // Lo necesitaremos más tarde
+import gm.zona_fit.servicio.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component; // Para que Spring lo gestione
+import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*; // Para BorderLayout, etc.
+import java.awt.*;
 import java.util.List;
 
-@Component // IMPORTANTE: Para que Spring pueda crear un bean de este formulario
+@Component
 public class ZonaFitForma extends JFrame {
-    private JPanel panelPrincipal; // Asegúrate que este nombre coincida con el del diseñador
-    // ... otros JComponents que definiste en el diseñador (nombreTexto, tablaUsuarios, etc.)
-    // IntelliJ los generará automáticamente si les diste "Field name"
+    private JPanel panelPrincipal;
 
-    // Estos son ejemplos, asegúrate que los nombres de campo sean los que pusiste en el diseñador
+
+
     JTextField nombreTexto;
     JTextField apellidoTexto;
     JTextField membresiaTexto;
@@ -28,18 +27,17 @@ public class ZonaFitForma extends JFrame {
     private JPanel panelTabla;
     private JPanel panelBotones;
 
-    private final UsuarioService usuarioService; // Inyectaremos el servicio
-    // Variable para almacenar el ID del usuario seleccionado/en edición
+    private final UsuarioService usuarioService;
+
     private Integer idUsuarioFormulario;
-    // Objeto para manejar el modelo de la tabla
+
     private DefaultTableModel tablaModeloUsuarios;
 
     @Autowired
     public ZonaFitForma(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
-        iniciarForma(); // Esto inicializa los componentes visuales del .form
+        iniciarForma();
 
-        // Configuración de tabla, carga inicial y listener de selección (ya los tienes)
         tablaModeloUsuarios = new DefaultTableModel(null, new Object[]{"Id", "Nombre", "Apellido", "Membresía"});
         tablaUsuarios.setModel(tablaModeloUsuarios);
         cargarUsuarios();
@@ -75,7 +73,7 @@ public class ZonaFitForma extends JFrame {
 
             // 3. Crear o actualizar el objeto Usuario
             Usuario usuario = new Usuario();
-            // Si idUsuarioFormulario tiene un valor, estamos actualizando
+
             usuario.setIdUsuario(this.idUsuarioFormulario); // Si es null, Spring lo tratará como INSERT
 
             usuario.setNombre(nombre);
@@ -183,8 +181,6 @@ public class ZonaFitForma extends JFrame {
         setContentPane(panelPrincipal); // ASIGNAMOS EL PANEL PRINCIPAL DEL DISEÑADOR
         pack(); // Ajusta el tamaño de la ventana al contenido
         setLocationRelativeTo(null); // Centra la ventana
-        // Aquí es donde IntelliJ añade createUIComponents() si es necesario
-        // y donde se inicializan los componentes del .form
     }
     private void mostrarDatosEnFormulario() {
         int filaSeleccionada = tablaUsuarios.getSelectedRow();
@@ -223,23 +219,8 @@ public class ZonaFitForma extends JFrame {
     }
 
     // Este método es especial y lo usa el diseñador de IntelliJ si necesitas
-    // crear componentes con constructores personalizados ANTES de que el diseñador los use.
-    // Por ahora, puede que no lo necesites. Si IntelliJ lo añade, déjalo.
     private void createUIComponents() {
         // TODO: place custom component creation code here
-        // Por ejemplo, si necesitaras configurar el modelo de la tabla aquí,
-        // pero lo haremos más adelante.
     }
 
-    // Método principal para probar el formulario de forma aislada (opcional, ya lo hacemos desde ZonaFitApplication)
-        /*
-        public static void main(String[] args) {
-            // Para probar el diseño sin Spring Boot (no recomendado para la app final)
-            SwingUtilities.invokeLater(() -> {
-                // No podemos instanciar directamente si depende de Spring (@Autowired)
-                // JFrame frame = new ZonaFitForma(null); // Pasar null si no tenemos el servicio
-                // frame.setVisible(true);
-            });
-        }
-        */
 }

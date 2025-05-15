@@ -3,19 +3,17 @@ package gm.zona_fit.servicio;
 import gm.zona_fit.modelo.Usuario;
 import gm.zona_fit.repositorio.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service; // Importamos la anotación @Service
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service // Indica a Spring que esta clase es un componente de servicio y debe ser gestionada
+@Service
 public class UsuarioServiceImplementacion implements UsuarioService {
 
-    // Inyectamos el repositorio de Usuario
-    // Spring se encargará de crear una instancia de UsuarioRepository
-    // e inyectarla aquí (Dependency Injection)
+
     private final UsuarioRepository usuarioRepository;
 
-    // Usamos inyección por constructor (preferida)
+
     @Autowired // Esta anotación indica a Spring que use este constructor para crear el bean
     public UsuarioServiceImplementacion(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;

@@ -1,7 +1,7 @@
 package gm.zona_fit.servicio;
 
 import gm.zona_fit.modelo.Usuario;
-import java.util.List; // Importamos la clase List de Java util
+import java.util.List;
 
 public interface UsuarioService {
 
