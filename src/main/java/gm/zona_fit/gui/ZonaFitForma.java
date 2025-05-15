@@ -29,6 +29,8 @@ public class ZonaFitForma extends JFrame {
     private JPanel panelBotones;
 
     private final UsuarioService usuarioService; // Inyectaremos el servicio
+    // Variable para almacenar el ID del usuario seleccionado/en edición
+    private Integer idUsuarioFormulario;
     // Objeto para manejar el modelo de la tabla
     private DefaultTableModel tablaModeloUsuarios;
 
@@ -37,31 +39,76 @@ public class ZonaFitForma extends JFrame {
         this.usuarioService = usuarioService;
         iniciarForma(); // Esto inicializa los componentes visuales del .form
 
-        // 1. Configurar el modelo de la tabla
+        // Configuración de tabla, carga inicial y listener de selección (ya los tienes)
         tablaModeloUsuarios = new DefaultTableModel(null, new Object[]{"Id", "Nombre", "Apellido", "Membresía"});
         tablaUsuarios.setModel(tablaModeloUsuarios);
-
-        // 2. Cargar los datos de los usuarios en la tabla al iniciar
         cargarUsuarios();
-
-        // 3. Configurar el Listener para la selección de filas (ya lo tienes)
         tablaUsuarios.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 mostrarDatosEnFormulario();
             }
         });
 
-        // 4. Configurar el Listener para el botón Limpiar
+        // Listener para el botón Limpiar (ya lo tienes)
         botonLimpiar.addActionListener(e -> {
-            // Llamamos al método limpiarFormulario
             limpiarFormulario();
-            // Además, es buena práctica deseleccionar la fila en la tabla
             tablaUsuarios.clearSelection();
         });
 
-        // --- Fin Código Nuevo para Botón Limpiar ---
+        // --- Inicio Código Nuevo para Botón Guardar ---
 
-        // Aquí agregaremos listeners para Guardar y Eliminar más adelante...
+        // Listener para el botón Guardar
+        botonGuardar.addActionListener(e -> {
+            // 1. Obtener datos del formulario
+            String nombre = nombreTexto.getText();
+            String apellido = apellidoTexto.getText();
+            String membresia = membresiaTexto.getText();
+
+            // 2. Validar que los campos obligatorios no estén vacíos (validación básica)
+            if (nombre.isEmpty() || apellido.isEmpty() || membresia.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Todos los campos (Nombre, Apellido, Membresía) son obligatorios.",
+                        "Error de Validación",
+                        JOptionPane.WARNING_MESSAGE);
+                return; // Detenemos el proceso si la validación falla
+            }
+
+            // 3. Crear o actualizar el objeto Usuario
+            Usuario usuario = new Usuario();
+            // Si idUsuarioFormulario tiene un valor, estamos actualizando
+            usuario.setIdUsuario(this.idUsuarioFormulario); // Si es null, Spring lo tratará como INSERT
+
+            usuario.setNombre(nombre);
+            usuario.setApellido(apellido);
+            usuario.setMembresia(Integer.parseInt(membresia));
+
+            // 4. Llamar al servicio para guardar (insertar o actualizar)
+            try {
+                usuarioService.guardarUsuario(usuario);
+                JOptionPane.showMessageDialog(this,
+                        "Usuario guardado correctamente.",
+                        "Guardado Exitoso",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                // 5. Refrescar la tabla para mostrar los cambios
+                cargarUsuarios();
+
+                // 6. Limpiar el formulario después de guardar
+                limpiarFormulario();
+
+            } catch (Exception ex) {
+                // Manejo básico de errores (por ejemplo, si falla la conexión con la BD)
+                JOptionPane.showMessageDialog(this,
+                        "Error al guardar el usuario: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace(); // Imprime la traza del error en la consola
+            }
+        });
+
+        // --- Fin Código Nuevo para Botón Guardar ---
+
+        // Aquí agregaremos el listener para Eliminar más adelante...
     }
     private void cargarUsuarios() {
         // Limpiamos filas anteriores (en caso de refrescar la tabla)
@@ -91,28 +138,24 @@ public class ZonaFitForma extends JFrame {
         // y donde se inicializan los componentes del .form
     }
     private void mostrarDatosEnFormulario() {
-        // Obtenemos el índice de la fila seleccionada
         int filaSeleccionada = tablaUsuarios.getSelectedRow();
-
-        // Verificamos si alguna fila está seleccionada
-        if (filaSeleccionada != -1) { // -1 indica que ninguna fila está seleccionada
-            // Obtenemos el ID del usuario de la primera columna de la fila seleccionada
-            // Asegúrate de que la primera columna (índice 0) en tu modelo sea el ID
+        if (filaSeleccionada != -1) {
             Integer idUsuario = (Integer) tablaModeloUsuarios.getValueAt(filaSeleccionada, 0);
 
-            // Buscamos el usuario completo usando el servicio
+            // --- Inicio Código Nuevo ---
+            // Guardamos el ID del usuario seleccionado
+            this.idUsuarioFormulario = idUsuario;
+            // --- Fin Código Nuevo ---
+
             Usuario usuario = usuarioService.buscarUsuarioPorId(idUsuario);
 
-            // Verificamos si el usuario fue encontrado
             if (usuario != null) {
-                // Llenamos los campos de texto con los datos del usuario encontrado
                 nombreTexto.setText(usuario.getNombre());
                 apellidoTexto.setText(usuario.getApellido());
-                membresiaTexto.setText(usuario.getMembresia().toString()); // O String.valueOf(usuario.getMembresia()) si fuera numérico
+                membresiaTexto.setText(usuario.getMembresia().toString());
             } else {
-                // Esto no debería pasar si el ID de la tabla es válido, pero es buena práctica
-                // Limpiar formulario si el usuario no se encuentra (podría haber sido eliminado por otro usuario)
-                limpiarFormulario(); // Implementaremos este método después
+                // Si el usuario no se encuentra (eliminado externamente), limpiamos
+                limpiarFormulario();
             }
         } else {
             // Si no hay fila seleccionada, limpiar el formulario
@@ -123,9 +166,11 @@ public class ZonaFitForma extends JFrame {
         nombreTexto.setText("");
         apellidoTexto.setText("");
         membresiaTexto.setText("");
-        // Podrías añadir lógica para deshabilitar botones aquí si es necesario
-        // También podrías necesitar borrar la selección de la tabla, aunque mostrarDatosEnFormulario
-        // ya se encarga de limpiar si no hay selección.
+        // --- Inicio Código Nuevo ---
+        // Al limpiar el formulario, el ID del usuario actual pasa a ser nulo
+        this.idUsuarioFormulario = null;
+        // --- Fin Código Nuevo ---
+        tablaUsuarios.clearSelection(); // Ya estaba esto
     }
 
     // Este método es especial y lo usa el diseñador de IntelliJ si necesitas
