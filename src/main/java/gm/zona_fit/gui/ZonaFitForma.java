@@ -1,11 +1,14 @@
 package gm.zona_fit.gui;
 
+import gm.zona_fit.modelo.Usuario;
 import gm.zona_fit.servicio.UsuarioService; // Lo necesitaremos más tarde
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component; // Para que Spring lo gestione
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*; // Para BorderLayout, etc.
+import java.util.List;
 
 @Component // IMPORTANTE: Para que Spring pueda crear un bean de este formulario
 public class ZonaFitForma extends JFrame {
@@ -26,14 +29,54 @@ public class ZonaFitForma extends JFrame {
     private JPanel panelBotones;
 
     private final UsuarioService usuarioService; // Inyectaremos el servicio
+    // Objeto para manejar el modelo de la tabla
+    private DefaultTableModel tablaModeloUsuarios;
 
-    @Autowired // Inyección por constructor
+    @Autowired
     public ZonaFitForma(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
-        iniciarForma();
-        // Aquí aún no cargamos datos, solo configuramos la UI
-    }
+        iniciarForma(); // Esto inicializa los componentes visuales del .form
 
+        // 1. Configurar el modelo de la tabla
+        // Esto debe hacerse DESPUÉS de iniciarForma() para que tablaUsuarios no sea null
+        tablaModeloUsuarios = new DefaultTableModel(null, new Object[]{"Id", "Nombre", "Apellido", "Membresía"});
+        tablaUsuarios.setModel(tablaModeloUsuarios); // Asignamos nuestro modelo a la tabla
+        // Haremos que la columna ID sea invisible o al menos no redimensionable si no queremos mostrarla
+        // Esto se puede hacer después de cargar los datos o aquí, dependiendo de cómo lo prefieras.
+        // Por ahora, la dejaremos visible como en tu screenshot.
+
+        // 2. Cargar los datos de los usuarios en la tabla al iniciar
+        cargarUsuarios();
+
+        // 3. Configurar el Listener para la selección de filas
+        tablaUsuarios.getSelectionModel().addListSelectionListener(e -> {
+            // e.getValueIsAdjusting() es true durante el arrastre de selección, false al soltar
+            if (!e.getValueIsAdjusting()) {
+                // Cuando la selección se completa (soltamos el ratón)
+                mostrarDatosEnFormulario();
+            }
+        });
+
+        // Aquí podrías añadir otros listeners de botones si quieres configurarlos en el constructor
+    }
+    private void cargarUsuarios() {
+        // Limpiamos filas anteriores (en caso de refrescar la tabla)
+        tablaModeloUsuarios.setRowCount(0); // Elimina todas las filas existentes
+
+        // Obtener la lista de usuarios desde el servicio
+        List<Usuario> usuarios = usuarioService.listarUsuarios();
+
+        // Iterar sobre la lista de usuarios y añadirlos al modelo de la tabla
+        usuarios.forEach(usuario -> {
+            Object[] fila = {
+                    usuario.getIdUsuario(), // Columna 0 (será el ID)
+                    usuario.getNombre(),    // Columna 1
+                    usuario.getApellido(),  // Columna 2
+                    usuario.getMembresia()  // Columna 3
+            };
+            tablaModeloUsuarios.addRow(fila); // Añade la fila al modelo
+        });
+    }
     private void iniciarForma() {
         setTitle("Zona Fit (GYM)");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Cierra la aplicación al cerrar la ventana
@@ -42,6 +85,43 @@ public class ZonaFitForma extends JFrame {
         setLocationRelativeTo(null); // Centra la ventana
         // Aquí es donde IntelliJ añade createUIComponents() si es necesario
         // y donde se inicializan los componentes del .form
+    }
+    private void mostrarDatosEnFormulario() {
+        // Obtenemos el índice de la fila seleccionada
+        int filaSeleccionada = tablaUsuarios.getSelectedRow();
+
+        // Verificamos si alguna fila está seleccionada
+        if (filaSeleccionada != -1) { // -1 indica que ninguna fila está seleccionada
+            // Obtenemos el ID del usuario de la primera columna de la fila seleccionada
+            // Asegúrate de que la primera columna (índice 0) en tu modelo sea el ID
+            Integer idUsuario = (Integer) tablaModeloUsuarios.getValueAt(filaSeleccionada, 0);
+
+            // Buscamos el usuario completo usando el servicio
+            Usuario usuario = usuarioService.buscarUsuarioPorId(idUsuario);
+
+            // Verificamos si el usuario fue encontrado
+            if (usuario != null) {
+                // Llenamos los campos de texto con los datos del usuario encontrado
+                nombreTexto.setText(usuario.getNombre());
+                apellidoTexto.setText(usuario.getApellido());
+                membresiaTexto.setText(usuario.getMembresia().toString()); // O String.valueOf(usuario.getMembresia()) si fuera numérico
+            } else {
+                // Esto no debería pasar si el ID de la tabla es válido, pero es buena práctica
+                // Limpiar formulario si el usuario no se encuentra (podría haber sido eliminado por otro usuario)
+                limpiarFormulario(); // Implementaremos este método después
+            }
+        } else {
+            // Si no hay fila seleccionada, limpiar el formulario
+            limpiarFormulario();
+        }
+    }
+    private void limpiarFormulario() {
+        nombreTexto.setText("");
+        apellidoTexto.setText("");
+        membresiaTexto.setText("");
+        // Podrías añadir lógica para deshabilitar botones aquí si es necesario
+        // También podrías necesitar borrar la selección de la tabla, aunque mostrarDatosEnFormulario
+        // ya se encarga de limpiar si no hay selección.
     }
 
     // Este método es especial y lo usa el diseñador de IntelliJ si necesitas
