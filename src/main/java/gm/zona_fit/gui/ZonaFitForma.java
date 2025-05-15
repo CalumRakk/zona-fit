@@ -106,9 +106,58 @@ public class ZonaFitForma extends JFrame {
             }
         });
 
-        // --- Fin Código Nuevo para Botón Guardar ---
+        // Listener para el botón Eliminar
+        botonEliminar.addActionListener(e -> {
+            // 1. Verificar si hay una fila seleccionada
+            int filaSeleccionada = tablaUsuarios.getSelectedRow();
+            if (filaSeleccionada == -1) {
+                // Si no hay fila seleccionada, mostramos un aviso
+                JOptionPane.showMessageDialog(this,
+                        "Debes seleccionar un usuario en la tabla para eliminar.",
+                        "Seleccionar Usuario",
+                        JOptionPane.WARNING_MESSAGE);
+                return; // Salimos del listener
+            }
 
-        // Aquí agregaremos el listener para Eliminar más adelante...
+            // 2. Obtener el ID del usuario de la fila seleccionada
+            // Asegúrate que la columna 0 es el ID
+            Integer idUsuarioAEliminar = (Integer) tablaModeloUsuarios.getValueAt(filaSeleccionada, 0);
+
+            // 3. Pedir confirmación al usuario
+            int opcion = JOptionPane.showConfirmDialog(this,
+                    "¿Estás seguro de que deseas eliminar este usuario?",
+                    "Confirmar Eliminación",
+                    JOptionPane.YES_NO_OPTION, // Botones Si y No
+                    JOptionPane.QUESTION_MESSAGE); // Icono de pregunta
+
+            // 4. Si el usuario confirma (presiona Sí)
+            if (opcion == JOptionPane.YES_OPTION) {
+                try {
+                    // Llamar al servicio para eliminar el usuario por su ID
+                    usuarioService.eliminarUsuarioPorId(idUsuarioAEliminar);
+
+                    // Mostrar mensaje de éxito
+                    JOptionPane.showMessageDialog(this,
+                            "Usuario eliminado correctamente.",
+                            "Eliminación Exitosa",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    // 5. Refrescar la tabla y limpiar el formulario
+                    cargarUsuarios();
+                    limpiarFormulario(); // Limpiamos también los campos del formulario
+
+                } catch (Exception ex) {
+                    // Manejo básico de errores durante la eliminación
+                    JOptionPane.showMessageDialog(this,
+                            "Error al eliminar el usuario: " + ex.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace(); // Imprime la traza del error
+                }
+            }
+            // Si el usuario presiona No o cierra el diálogo, no hacemos nada
+        });
+
     }
     private void cargarUsuarios() {
         // Limpiamos filas anteriores (en caso de refrescar la tabla)
