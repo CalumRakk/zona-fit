@@ -38,26 +38,30 @@ public class ZonaFitForma extends JFrame {
         iniciarForma(); // Esto inicializa los componentes visuales del .form
 
         // 1. Configurar el modelo de la tabla
-        // Esto debe hacerse DESPUÉS de iniciarForma() para que tablaUsuarios no sea null
         tablaModeloUsuarios = new DefaultTableModel(null, new Object[]{"Id", "Nombre", "Apellido", "Membresía"});
-        tablaUsuarios.setModel(tablaModeloUsuarios); // Asignamos nuestro modelo a la tabla
-        // Haremos que la columna ID sea invisible o al menos no redimensionable si no queremos mostrarla
-        // Esto se puede hacer después de cargar los datos o aquí, dependiendo de cómo lo prefieras.
-        // Por ahora, la dejaremos visible como en tu screenshot.
+        tablaUsuarios.setModel(tablaModeloUsuarios);
 
         // 2. Cargar los datos de los usuarios en la tabla al iniciar
         cargarUsuarios();
 
-        // 3. Configurar el Listener para la selección de filas
+        // 3. Configurar el Listener para la selección de filas (ya lo tienes)
         tablaUsuarios.getSelectionModel().addListSelectionListener(e -> {
-            // e.getValueIsAdjusting() es true durante el arrastre de selección, false al soltar
             if (!e.getValueIsAdjusting()) {
-                // Cuando la selección se completa (soltamos el ratón)
                 mostrarDatosEnFormulario();
             }
         });
 
-        // Aquí podrías añadir otros listeners de botones si quieres configurarlos en el constructor
+        // 4. Configurar el Listener para el botón Limpiar
+        botonLimpiar.addActionListener(e -> {
+            // Llamamos al método limpiarFormulario
+            limpiarFormulario();
+            // Además, es buena práctica deseleccionar la fila en la tabla
+            tablaUsuarios.clearSelection();
+        });
+
+        // --- Fin Código Nuevo para Botón Limpiar ---
+
+        // Aquí agregaremos listeners para Guardar y Eliminar más adelante...
     }
     private void cargarUsuarios() {
         // Limpiamos filas anteriores (en caso de refrescar la tabla)
